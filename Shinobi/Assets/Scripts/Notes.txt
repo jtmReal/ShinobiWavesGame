@@ -1,0 +1,126 @@
+Weapon script
+
+using UnityEngine;
+
+public class Weapon : MonoBehaviour 
+{
+
+    public GameObject projectile;
+    public Transform shotPoint;
+    public float timeBetweenShots;//how much time hsa to pass between shots
+
+    private float shotTime;//exact time we can shoot at
+
+    private void Update()
+    {
+        //I dont really understand why I have to get direction then angle then rotation?!?!?!??!!?!?!?!???!?!??!?!?!?!?!?!?!!?!??!?!??!
+        Vector2 direction = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position; //This gets distance between mouse position and weapon position, input.mousePosition returns a screenpoint so we had to convert it to world points using ScreenToWorldPoint()
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;//Transforms direction into angle, then we have to convert it to degrees 
+        Quaternion rotation = Quaternion.AngleAxis(angle - 90, Vector3.forward);//Convert angle into rotation
+        transform.rotation = rotation;//Set rotation of actual weapon to rotation we calculated
+
+        if (Input.GetMouseButton(0))//if player clicks left mouse button
+        {
+            if(Time.time >= shotTime)//if time in game is greater or equal to shotTIme(if allowed to shoot)
+            {
+                Instantiate(projectile, shotPoint.position, transform.rotation);//projectile is spawned at shotPoint position with the rotation the weapon currently already has
+                shotTime = Time.time + timeBetweenShots;//recalculate shot time setting it equal to current time + time between shots
+            }
+        }
+    }
+}
+
+
+Projectile Script
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Projectile : MonoBehaviour
+{
+    public float speed;
+    public float lifeTime;
+
+    public GameObject explosion;
+
+    private void Start()
+    {
+        Invoke("DestroyProjectile", lifeTime);
+    }
+
+    private void Update()
+    {
+        transform.Translate(Vector2.up * speed * Time.deltaTime);//So basically moves projectile 
+    }
+
+    void DestroyProjectile()
+    {
+        Instantiate(explosion, transform.position, Quaternion.identity);
+        Destroy(gameObject);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+RANGEDENEMY
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class RangedEnemy : Enemy
+{
+    public float stopDistance;
+
+    private float attackTime;
+
+    public Transform shotPoint;
+
+    public GameObject enemyBullet;
+
+
+    public override void Start()
+    {
+        base.Start();
+    }
+
+    private void Update()
+    {
+        if (player != null)
+        {
+            if (Vector2.Distance(transform.position, player.position) > stopDistance)//If still too far away from player
+            {
+                transform.position = Vector2.MoveTowards(transform.position, player.position, speed * Time.deltaTime);
+            }
+            if ( Time.time >= attackTime)
+            {
+                attackTime = Time.time + timeBetweenAttacks;
+                RangedAttack();
+            }
+
+
+        }
+    }
+    public void RangedAttack()
+    {
+        Vector2 direction = player.position - shotPoint.position;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;//Transforms direction into angle, then we have to convert it to degrees 
+        Quaternion rotation = Quaternion.AngleAxis(angle - 90, Vector3.forward);//Convert angle into rotation
+        shotPoint.rotation = rotation;//Set rotation of actual weapon to rotation we calculated
+
+        Instantiate(enemyBullet, shotPoint.position, shotPoint.rotation);
+    }
+}
